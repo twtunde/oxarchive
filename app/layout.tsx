@@ -1,5 +1,6 @@
 import { Geist_Mono, Newsreader, Roboto } from "next/font/google"
 import type { Metadata } from "next"
+import Script from "next/script"
 
 import "./globals.css"
 import { QueryProvider } from "@/components/query-provider"
@@ -100,6 +101,68 @@ export default function RootLayout({
         <QueryProvider>
           <ThemeProvider>{children}</ThemeProvider>
         </QueryProvider>
+        <Script id="tawk-init" strategy="afterInteractive">
+          {`
+            var TAWK_WIDGET_ID = '1jv9kftie';
+
+            function applyTawkMobileOffset() {
+              if (!window.matchMedia('(max-width: 767px)').matches) {
+                return;
+              }
+
+              var selector = [
+                'iframe[src*="' + TAWK_WIDGET_ID + '"]',
+                'iframe[title*="chat widget"]',
+                '#tawkchat-container',
+                '#tawkchat-minified-wrapper'
+              ].join(',');
+
+              var nodes = document.querySelectorAll(selector);
+              nodes.forEach(function (node) {
+                if (node && node.style) {
+                  node.style.setProperty('bottom', '96px', 'important');
+                }
+              });
+            }
+
+            window.Tawk_API = window.Tawk_API || {};
+            window.Tawk_LoadStart = new Date();
+            window.Tawk_API.customStyle = {
+              visibility: {
+                desktop: {
+                  position: 'br',
+                  xOffset: '20px',
+                  yOffset: '20px'
+                },
+                mobile: {
+                  position: 'br',
+                  xOffset: '16px',
+                  yOffset: '96px'
+                }
+              }
+            };
+
+            window.Tawk_API.onLoad = function () {
+              applyTawkMobileOffset();
+
+              var attempts = 0;
+              var maxAttempts = 20;
+              var intervalId = window.setInterval(function () {
+                attempts += 1;
+                applyTawkMobileOffset();
+                if (attempts >= maxAttempts) {
+                  window.clearInterval(intervalId);
+                }
+              }, 250);
+            };
+          `}
+        </Script>
+        <Script
+          id="tawk-widget"
+          src="https://embed.tawk.to/6a7387271d75e11d48ca6316/1jv9kftie"
+          strategy="afterInteractive"
+          crossOrigin="anonymous"
+        />
       </body>
     </html>
   )
