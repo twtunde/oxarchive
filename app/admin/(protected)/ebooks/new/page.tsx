@@ -1,7 +1,9 @@
 import type { Metadata } from "next"
+import Link from "next/link"
 
 import { db } from "@/db"
 import { categories } from "@/db/schema"
+import { Button } from "@/components/ui/button"
 
 import { EbookUploadForm } from "./_components/ebook-upload-form"
 
@@ -23,6 +25,11 @@ export default async function NewEbookPage() {
         <h1 className="text-2xl font-semibold tracking-tight">
           Upload an ebook
         </h1>
+        <div>
+          <Button asChild variant="outline" size="sm">
+            <Link href="/admin/categories">Manage categories</Link>
+          </Button>
+        </div>
       </header>
 
       <EbookUploadForm categories={categoryOptions} />

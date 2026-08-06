@@ -52,6 +52,9 @@ export default async function AdminOrdersPage({
           <Link href="/admin/bank-settings">Bank settings</Link>
         </Button>
         <Button asChild variant="outline" size="sm">
+          <Link href="/admin/categories">Categories</Link>
+        </Button>
+        <Button asChild variant="outline" size="sm">
           <Link href="/admin/email-test">Email test</Link>
         </Button>
       </div>

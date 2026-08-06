@@ -1,9 +1,12 @@
 import type { Metadata } from "next"
 
+import { db } from "@/db"
+import { categories } from "@/db/schema"
 import { getPaginatedCatalogEbooks } from "@/db/queries/catalog"
 import { parseCatalogFilters } from "@/lib/catalog-filters"
 
 import { CatalogList } from "./_components/catalog-list"
+import { CategoryFilterDrawer } from "./_components/category-filter-drawer"
 
 export const metadata: Metadata = {
   title: "Catalog",
@@ -20,7 +23,13 @@ type CatalogPageProps = {
 
 export default async function CatalogPage({ searchParams }: CatalogPageProps) {
   const filters = parseCatalogFilters(await searchParams)
-  const result = await getPaginatedCatalogEbooks(filters)
+  const [result, categoryOptions] = await Promise.all([
+    getPaginatedCatalogEbooks(filters),
+    db
+      .select({ slug: categories.slug, name: categories.name })
+      .from(categories)
+      .orderBy(categories.name),
+  ])
 
   // Remounts CatalogList (resetting its internal page state) whenever filters other than page change.
   const filterKey = [
@@ -43,6 +52,10 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
           Browse industry-focused ebooks, research materials, and technical
           references.
         </p>
+        <CategoryFilterDrawer
+          categories={categoryOptions}
+          selectedCategory={filters.category}
+        />
       </header>
 
       <CatalogList key={filterKey} filters={filters} initialData={result} />
