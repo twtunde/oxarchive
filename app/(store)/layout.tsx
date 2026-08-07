@@ -1,6 +1,7 @@
 import { CartHydrator } from "@/components/cart-hydrator"
 import { FavoritesHydrator } from "@/components/favorites-hydrator"
 import { MobileNavDock } from "@/components/mobile-nav-dock"
+import { PublishAnonymouslyFab } from "@/components/publish-anonymously-fab"
 import { SiteFooter } from "@/components/site-footer"
 import { SiteHeader } from "@/components/site-header"
 import { SiteSidebar } from "@/components/site-sidebar"
@@ -20,6 +21,7 @@ export default function StoreLayout({
         <main className="flex-1">{children}</main>
         <SiteFooter />
       </div>
+      <PublishAnonymouslyFab />
       <MobileNavDock />
     </div>
   )

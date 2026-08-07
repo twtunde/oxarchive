@@ -3,7 +3,14 @@ import "server-only"
 import { createElement } from "react"
 import { Resend } from "resend"
 
-import { PaymentConfirmedEmail, TransferClaimedAlertEmail } from "@/lib/email-templates"
+import {
+    PaymentConfirmedEmail,
+    PublisherPayoutSummaryEmail,
+    PublisherSubmissionApprovedEmail,
+    PublisherSubmissionReceivedEmail,
+    PublisherSubmissionRejectedEmail,
+    TransferClaimedAlertEmail,
+} from "@/lib/email-templates"
 import { env } from "@/lib/env"
 import { formatPrice } from "@/lib/format"
 
@@ -109,4 +116,162 @@ export async function sendPaymentConfirmedEmail(input: PaymentConfirmedEmailInpu
     })
 
     assertEmailSent(result, `payment-confirmed email for ${input.orderToken}`)
+}
+
+type PublisherSubmissionReceivedInput = {
+    pseudonym: string
+    title: string
+    contactEmail: string
+}
+
+export async function sendPublisherSubmissionReceivedEmail(input: PublisherSubmissionReceivedInput) {
+    if (!resend) {
+        console.warn(
+            `[email] Skipped submission-received email for ${input.title} — RESEND_API_KEY not configured.`,
+        )
+        return
+    }
+
+    const result = await resend.emails.send({
+        from: defaultFrom,
+        to: input.contactEmail,
+        subject: `Submission received — ${input.title}`,
+        react: createElement(PublisherSubmissionReceivedEmail, {
+            pseudonym: input.pseudonym,
+            title: input.title,
+        }),
+        text: [
+            `Hi ${input.pseudonym},`,
+            `We received your anonymous publication draft for ${input.title}.`,
+            "Your draft is queued for editorial market review.",
+        ].join("\n"),
+    })
+
+    assertEmailSent(result, `submission-received email for ${input.title}`)
+}
+
+type PublisherSubmissionApprovedInput = {
+    pseudonym: string
+    title: string
+    contactEmail: string
+    listingUrl: string
+    suggestedPriceInKobo: number
+    finalPriceInKobo: number
+    currency: string
+}
+
+export async function sendPublisherSubmissionApprovedEmail(input: PublisherSubmissionApprovedInput) {
+    if (!resend) {
+        console.warn(
+            `[email] Skipped submission-approved email for ${input.title} — RESEND_API_KEY not configured.`,
+        )
+        return
+    }
+
+    const suggestedPrice = formatPrice(input.suggestedPriceInKobo, input.currency)
+    const finalPrice = formatPrice(input.finalPriceInKobo, input.currency)
+
+    const result = await resend.emails.send({
+        from: defaultFrom,
+        to: input.contactEmail,
+        subject: `Approved and listed — ${input.title}`,
+        react: createElement(PublisherSubmissionApprovedEmail, {
+            pseudonym: input.pseudonym,
+            title: input.title,
+            listingUrl: input.listingUrl,
+            suggestedPrice,
+            finalPrice,
+        }),
+        text: [
+            `Hi ${input.pseudonym},`,
+            `Your submission for ${input.title} has been approved and listed.`,
+            `Suggested price: ${suggestedPrice}`,
+            `Final listing price: ${finalPrice}`,
+            `Listing URL: ${input.listingUrl}`,
+        ].join("\n"),
+    })
+
+    assertEmailSent(result, `submission-approved email for ${input.title}`)
+}
+
+type PublisherSubmissionRejectedInput = {
+    pseudonym: string
+    title: string
+    contactEmail: string
+    reason: string
+}
+
+export async function sendPublisherSubmissionRejectedEmail(input: PublisherSubmissionRejectedInput) {
+    if (!resend) {
+        console.warn(
+            `[email] Skipped submission-rejected email for ${input.title} — RESEND_API_KEY not configured.`,
+        )
+        return
+    }
+
+    const result = await resend.emails.send({
+        from: defaultFrom,
+        to: input.contactEmail,
+        subject: `Submission update — ${input.title}`,
+        react: createElement(PublisherSubmissionRejectedEmail, {
+            pseudonym: input.pseudonym,
+            title: input.title,
+            reason: input.reason,
+        }),
+        text: [
+            `Hi ${input.pseudonym},`,
+            `Your submission for ${input.title} was not approved at this time.`,
+            `Reviewer note: ${input.reason}`,
+        ].join("\n"),
+    })
+
+    assertEmailSent(result, `submission-rejected email for ${input.title}`)
+}
+
+type PublisherPayoutSummaryInput = {
+    pseudonym: string
+    contactEmail: string
+    payoutMonth: string
+    grossSaleInKobo: number
+    platformFeeInKobo: number
+    publisherNetInKobo: number
+    salesCount: number
+    currency: string
+}
+
+export async function sendPublisherPayoutSummaryEmail(input: PublisherPayoutSummaryInput) {
+    if (!resend) {
+        console.warn(
+            `[email] Skipped payout-summary email for ${input.pseudonym} (${input.payoutMonth}) — RESEND_API_KEY not configured.`,
+        )
+        return
+    }
+
+    const grossSales = formatPrice(input.grossSaleInKobo, input.currency)
+    const platformFee = formatPrice(input.platformFeeInKobo, input.currency)
+    const netPayout = formatPrice(input.publisherNetInKobo, input.currency)
+
+    const result = await resend.emails.send({
+        from: defaultFrom,
+        to: input.contactEmail,
+        subject: `Month-end payout summary — ${input.payoutMonth}`,
+        react: createElement(PublisherPayoutSummaryEmail, {
+            pseudonym: input.pseudonym,
+            payoutMonth: input.payoutMonth,
+            grossSales,
+            platformFee,
+            netPayout,
+            salesCount: input.salesCount,
+        }),
+        text: [
+            `Hi ${input.pseudonym},`,
+            `Month-end payout summary for ${input.payoutMonth}:`,
+            `Book sales: ${input.salesCount}`,
+            `Gross sales: ${grossSales}`,
+            `Platform fee (15%): ${platformFee}`,
+            `Net payout: ${netPayout}`,
+        ].join("\n"),
+    })
+
+    assertEmailSent(result, `payout-summary email for ${input.pseudonym} (${input.payoutMonth})`)
 }

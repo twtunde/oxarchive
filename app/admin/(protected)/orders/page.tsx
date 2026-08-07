@@ -57,6 +57,9 @@ export default async function AdminOrdersPage({
         <Button asChild variant="outline" size="sm">
           <Link href="/admin/email-test">Email test</Link>
         </Button>
+        <Button asChild variant="outline" size="sm">
+          <Link href="/admin/publisher-submissions">Publisher submissions</Link>
+        </Button>
       </div>
 
       <div className="space-y-4">

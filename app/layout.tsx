@@ -65,7 +65,7 @@ export const metadata: Metadata = {
     description: siteConfig.description,
     images: [
       {
-        url: "/seo/android-chrome-512x512.png",
+        url: "/opengraph.png",
         width: 512,
         height: 512,
         alt: "Oxarchive - Curated technical and research ebooks",
@@ -76,7 +76,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Oxarchive | Curated technical and research ebooks",
     description: siteConfig.description,
-    images: ["/seo/android-chrome-512x512.png"],
+    images: ["/opengraph.png"],
   },
 }
 

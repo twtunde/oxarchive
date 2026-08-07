@@ -1,6 +1,7 @@
 "use client"
 
 import { BookMarked, Heart, LayoutGrid, ShoppingBag } from "lucide-react"
+import Image from "next/image"
 import Link from "next/link"
 
 import { useCartStore } from "@/lib/stores/cart-store"
@@ -22,9 +23,15 @@ export function SiteSidebar() {
       <Link
         href="/"
         aria-label="Oxarchive home"
-        className="font-display text-sm leading-tight tracking-wide [writing-mode:vertical-lr]"
+        className="rounded-md transition-opacity hover:opacity-90"
       >
-        Oxarchive
+        <Image
+          src="/logo.svg"
+          alt="Oxarchive"
+          width={34}
+          height={47}
+          priority
+        />
       </Link>
 
       <nav className="flex flex-col items-center gap-1 border-y border-sidebar-border py-4">

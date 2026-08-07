@@ -192,6 +192,182 @@ export function PaymentConfirmedEmail({
   )
 }
 
+type PublisherSubmissionReceivedEmailProps = {
+  pseudonym: string
+  title: string
+}
+
+export function PublisherSubmissionReceivedEmail({
+  pseudonym,
+  title,
+}: PublisherSubmissionReceivedEmailProps) {
+  return (
+    <EmailLayout
+      title="Submission received"
+      preheader={`Your draft submission for ${title} has been received.`}
+    >
+      <h1 style={styles.h1}>Submission received</h1>
+      <p style={styles.p}>Hi {pseudonym},</p>
+      <p style={styles.p}>
+        We received your anonymous publication draft for{" "}
+        <strong>{title}</strong>.
+      </p>
+      <p style={styles.p}>
+        Your submission is stored as a draft and queued for editorial market
+        review.
+      </p>
+    </EmailLayout>
+  )
+}
+
+type PublisherSubmissionApprovedEmailProps = {
+  pseudonym: string
+  title: string
+  listingUrl: string
+  suggestedPrice: string
+  finalPrice: string
+}
+
+export function PublisherSubmissionApprovedEmail({
+  pseudonym,
+  title,
+  listingUrl,
+  suggestedPrice,
+  finalPrice,
+}: PublisherSubmissionApprovedEmailProps) {
+  const adjusted = suggestedPrice !== finalPrice
+
+  return (
+    <EmailLayout
+      title="Publication approved"
+      preheader={`Your listing for ${title} is now live on Oxarchive.`}
+    >
+      <h1 style={styles.h1}>Your listing is live</h1>
+      <p style={styles.p}>Hi {pseudonym},</p>
+      <p style={styles.p}>
+        Your submission <strong>{title}</strong> has been approved and
+        published.
+      </p>
+      <p style={styles.pStrong}>Pricing</p>
+      <table
+        role="presentation"
+        width="100%"
+        cellPadding={0}
+        cellSpacing={0}
+        style={styles.infoTable}
+      >
+        <tbody>
+          <tr>
+            <td style={styles.infoLabel}>Suggested price</td>
+            <td style={styles.infoValue}>{suggestedPrice}</td>
+          </tr>
+          <tr>
+            <td style={styles.infoLabel}>Final listing price</td>
+            <td style={styles.infoValue}>{finalPrice}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      {adjusted ? (
+        <p style={styles.p}>
+          The final price was adjusted based on market analysis in line with
+          platform policy.
+        </p>
+      ) : null}
+
+      <p style={styles.ctaWrap}>
+        <a href={listingUrl} style={styles.cta}>
+          Open publication listing
+        </a>
+      </p>
+      <p style={styles.note}>Listing URL: {listingUrl}</p>
+    </EmailLayout>
+  )
+}
+
+type PublisherSubmissionRejectedEmailProps = {
+  pseudonym: string
+  title: string
+  reason: string
+}
+
+export function PublisherSubmissionRejectedEmail({
+  pseudonym,
+  title,
+  reason,
+}: PublisherSubmissionRejectedEmailProps) {
+  return (
+    <EmailLayout
+      title="Submission update"
+      preheader={`Your submission for ${title} was not approved.`}
+    >
+      <h1 style={styles.h1}>Submission not approved</h1>
+      <p style={styles.p}>Hi {pseudonym},</p>
+      <p style={styles.p}>
+        We reviewed <strong>{title}</strong> and it was not approved for listing
+        at this time.
+      </p>
+      <p style={styles.pStrong}>Reviewer note</p>
+      <p style={styles.p}>{reason}</p>
+    </EmailLayout>
+  )
+}
+
+type PublisherPayoutSummaryEmailProps = {
+  pseudonym: string
+  payoutMonth: string
+  grossSales: string
+  platformFee: string
+  netPayout: string
+  salesCount: number
+}
+
+export function PublisherPayoutSummaryEmail({
+  pseudonym,
+  payoutMonth,
+  grossSales,
+  platformFee,
+  netPayout,
+  salesCount,
+}: PublisherPayoutSummaryEmailProps) {
+  return (
+    <EmailLayout
+      title={`Month-end payout summary (${payoutMonth})`}
+      preheader={`Your ${payoutMonth} payout summary is ready.`}
+    >
+      <h1 style={styles.h1}>Payout summary</h1>
+      <p style={styles.p}>Hi {pseudonym},</p>
+      <p style={styles.p}>Here is your month-end summary for {payoutMonth}.</p>
+      <table
+        role="presentation"
+        width="100%"
+        cellPadding={0}
+        cellSpacing={0}
+        style={styles.infoTable}
+      >
+        <tbody>
+          <tr>
+            <td style={styles.infoLabel}>Book sales</td>
+            <td style={styles.infoValue}>{salesCount}</td>
+          </tr>
+          <tr>
+            <td style={styles.infoLabel}>Gross sales</td>
+            <td style={styles.infoValue}>{grossSales}</td>
+          </tr>
+          <tr>
+            <td style={styles.infoLabel}>Platform fee (15%)</td>
+            <td style={styles.infoValue}>{platformFee}</td>
+          </tr>
+          <tr>
+            <td style={styles.infoLabel}>Net payout</td>
+            <td style={styles.infoValue}>{netPayout}</td>
+          </tr>
+        </tbody>
+      </table>
+    </EmailLayout>
+  )
+}
+
 const styles: Record<string, React.CSSProperties> = {
   body: {
     margin: 0,

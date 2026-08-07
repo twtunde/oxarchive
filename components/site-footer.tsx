@@ -6,6 +6,7 @@ const FOOTER_LINKS = [
     links: [
       { href: "/catalog", label: "All books" },
       { href: "/catalog?sort=newest", label: "New arrivals" },
+      { href: "/publish-anonymously", label: "Publish anonymously" },
       { href: "/cart", label: "Your bag" },
     ],
   },
@@ -27,7 +28,8 @@ export function SiteFooter() {
           <p className="font-display text-lg">Oxarchive</p>
           <p className="max-w-xs text-sm text-muted-foreground">
             A working archive of professional and research-grade ebooks —
-            industry docs, references, and technical reading.
+            industry docs, references, and technical reading, with stronger
+            protections for anonymous publishers and their literary works.
           </p>
         </div>
 

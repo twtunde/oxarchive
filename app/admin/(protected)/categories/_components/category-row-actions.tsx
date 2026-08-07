@@ -38,11 +38,11 @@ function FieldError({ messages }: { messages?: string[] }) {
 export function CategoryRowActions({ category }: CategoryRowActionsProps) {
   const [updateState, updateAction, updating] = useActionState(
     updateCategoryAction,
-    initialState,
+    initialState
   )
   const [deleteState, deleteAction, deleting] = useActionState(
     deleteCategoryAction,
-    initialState,
+    initialState
   )
 
   return (
@@ -53,12 +53,21 @@ export function CategoryRowActions({ category }: CategoryRowActionsProps) {
         <div className="grid gap-2 sm:grid-cols-2">
           <div className="space-y-1">
             <Label htmlFor={`name-${category.id}`}>Name</Label>
-            <Input id={`name-${category.id}`} name="name" defaultValue={category.name} required />
+            <Input
+              id={`name-${category.id}`}
+              name="name"
+              defaultValue={category.name}
+              required
+            />
             <FieldError messages={updateState.fieldErrors?.name} />
           </div>
           <div className="space-y-1">
             <Label htmlFor={`slug-${category.id}`}>Slug</Label>
-            <Input id={`slug-${category.id}`} name="slug" defaultValue={category.slug} />
+            <Input
+              id={`slug-${category.id}`}
+              name="slug"
+              defaultValue={category.slug}
+            />
             <FieldError messages={updateState.fieldErrors?.slug} />
           </div>
         </div>
@@ -79,7 +88,13 @@ export function CategoryRowActions({ category }: CategoryRowActionsProps) {
             {updating ? "Saving..." : "Save"}
           </Button>
           {updateState.message ? (
-            <p className={updateState.status === "error" ? "text-xs text-destructive" : "text-xs text-primary"}>
+            <p
+              className={
+                updateState.status === "error"
+                  ? "text-xs text-destructive"
+                  : "text-xs text-primary"
+              }
+            >
               {updateState.message}
             </p>
           ) : null}
@@ -91,7 +106,7 @@ export function CategoryRowActions({ category }: CategoryRowActionsProps) {
         className="flex items-center gap-2"
         onSubmit={(event) => {
           const confirmed = window.confirm(
-            `Delete category "${category.name}"? This cannot be undone.`,
+            `Delete category "${category.name}"? This cannot be undone.`
           )
 
           if (!confirmed) {
@@ -100,11 +115,22 @@ export function CategoryRowActions({ category }: CategoryRowActionsProps) {
         }}
       >
         <input type="hidden" name="id" value={category.id} />
-        <Button type="submit" variant="destructive" size="sm" disabled={deleting}>
+        <Button
+          type="submit"
+          variant="destructive"
+          size="sm"
+          disabled={deleting}
+        >
           {deleting ? "Deleting..." : "Delete"}
         </Button>
         {deleteState.message ? (
-          <p className={deleteState.status === "error" ? "text-xs text-destructive" : "text-xs text-primary"}>
+          <p
+            className={
+              deleteState.status === "error"
+                ? "text-xs text-destructive"
+                : "text-xs text-primary"
+            }
+          >
             {deleteState.message}
           </p>
         ) : null}

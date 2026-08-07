@@ -5,8 +5,9 @@ import { randomBytes } from "node:crypto"
 import { and, desc, eq, inArray } from "drizzle-orm"
 
 import { db } from "@/db"
-import { ebooks, orderItems, orders, purchases } from "@/db/schema"
+import { ebooks, orderItems, orders, publisherEarnings, publisherSubmissions, purchases } from "@/db/schema"
 import { generateOrderToken } from "@/lib/order-token"
+import { calculatePublisherEarnings, payoutMonthFromDate } from "@/lib/publisher-pricing"
 
 const ORDER_TOKEN_MAX_ATTEMPTS = 5
 const DOWNLOAD_ACCESS_DAYS = 365
@@ -146,6 +147,43 @@ export async function markOrderPaid(orderId: string): Promise<void> {
                 buyerEmail: order.buyerEmail,
                 accessToken: randomBytes(48).toString("base64url"),
                 downloadExpiresAt,
+            })
+
+            const submission = await tx.query.publisherSubmissions.findFirst({
+                where: and(
+                    eq(publisherSubmissions.approvedEbookId, item.ebookId),
+                    eq(publisherSubmissions.status, "approved"),
+                ),
+                columns: {
+                    id: true,
+                },
+            })
+
+            if (!submission) {
+                continue
+            }
+
+            const earningExists = await tx.query.publisherEarnings.findFirst({
+                where: eq(publisherEarnings.orderItemId, item.id),
+                columns: { id: true },
+            })
+
+            if (earningExists) {
+                continue
+            }
+
+            const feeBreakdown = calculatePublisherEarnings(item.unitPriceInKobo)
+
+            await tx.insert(publisherEarnings).values({
+                submissionId: submission.id,
+                ebookId: item.ebookId,
+                orderId,
+                orderItemId: item.id,
+                grossSaleInKobo: feeBreakdown.grossSaleInKobo,
+                platformFeeInKobo: feeBreakdown.platformFeeInKobo,
+                publisherNetInKobo: feeBreakdown.publisherNetInKobo,
+                currency: order.currency,
+                payoutMonth: payoutMonthFromDate(new Date()),
             })
         }
     })

@@ -15,6 +15,13 @@
       "when": 1785934604303,
       "tag": "0001_majestic_blade",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1786112823010,
+      "tag": "0002_wonderful_christian_walker",
+      "breakpoints": true
     }
   ]
 }
