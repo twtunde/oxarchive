@@ -4,17 +4,23 @@ import Image from "next/image"
 import Link from "next/link"
 
 import { FavoriteButton } from "@/components/favorite-button"
+import { ScrollReveal } from "@/components/scroll-reveal"
 import { Badge } from "@/components/ui/badge"
 import type { CatalogEbook } from "@/db/queries/catalog"
 import { formatPrice } from "@/lib/format"
 
 type EbookCardProps = {
   ebook: CatalogEbook
+  revealIndex?: number
 }
 
-export function EbookCard({ ebook }: EbookCardProps) {
+export function EbookCard({ ebook, revealIndex = 0 }: EbookCardProps) {
   return (
-    <div className="group relative flex h-full flex-col overflow-hidden rounded-xl bg-card shadow-sm ring-1 ring-foreground/10 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg hover:ring-foreground/20">
+    <ScrollReveal
+      className="group relative flex h-full flex-col overflow-hidden rounded-xl bg-card shadow-sm ring-1 ring-foreground/10 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg hover:ring-foreground/20"
+      index={revealIndex}
+      threshold={0.1}
+    >
       <FavoriteButton
         ebookId={ebook.id}
         size="icon-sm"
@@ -79,6 +85,6 @@ export function EbookCard({ ebook }: EbookCardProps) {
           className="w-full"
         />
       </div>
-    </div>
+    </ScrollReveal>
   )
 }

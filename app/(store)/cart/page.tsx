@@ -9,6 +9,7 @@ import {
   createTransferOrderAction,
   type CreateTransferOrderState,
 } from "./actions"
+import { ScrollReveal } from "@/components/scroll-reveal"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -129,9 +130,11 @@ export default function CartPage() {
             </CardHeader>
             <CardContent className="space-y-3">
               <ul className="space-y-3">
-                {orderedEbooks.map((ebook) => (
-                  <li
+                {orderedEbooks.map((ebook, index) => (
+                  <ScrollReveal
                     key={ebook.id}
+                    as="li"
+                    index={index}
                     className="flex items-start justify-between gap-4 rounded-md border p-3"
                   >
                     <div className="space-y-1">
@@ -156,7 +159,7 @@ export default function CartPage() {
                         Remove
                       </Button>
                     </div>
-                  </li>
+                  </ScrollReveal>
                 ))}
               </ul>
             </CardContent>

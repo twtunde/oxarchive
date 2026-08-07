@@ -5,6 +5,7 @@ import Link from "next/link"
 
 import { EbookRailItem } from "@/components/ebook-rail-item"
 import { FavoriteButton } from "@/components/favorite-button"
+import { ScrollReveal } from "@/components/scroll-reveal"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { getCatalogEbooks } from "@/db/queries/catalog"
@@ -32,7 +33,11 @@ export default async function LandingPage() {
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-16 px-6 py-12 sm:px-10 sm:py-16">
       <section>
         {featured ? (
-          <div className="grid gap-10 sm:grid-cols-2 sm:items-center sm:gap-16">
+          <ScrollReveal
+            as="section"
+            className="grid gap-10 sm:grid-cols-2 sm:items-center sm:gap-16"
+            index={0}
+          >
             <div className="space-y-5">
               <p className="text-xs font-medium tracking-widest text-muted-foreground uppercase">
                 Newly catalogued
@@ -76,7 +81,7 @@ export default async function LandingPage() {
               </div>
             </div>
 
-            <div className="relative mx-auto aspect-2/3 w-48 rotate-3 overflow-hidden rounded-lg bg-muted shadow-xl sm:w-64">
+            <div className="relative mx-auto aspect-2/3 w-48 rotate-3 overflow-hidden rounded-lg bg-muted shadow-xl transition-transform duration-300 ease-out hover:rotate-0 motion-reduce:transition-none sm:w-64">
               {featured.coverImageUrl ? (
                 <Image
                   src={featured.coverImageUrl}
@@ -88,7 +93,7 @@ export default async function LandingPage() {
                 />
               ) : null}
             </div>
-          </div>
+          </ScrollReveal>
         ) : (
           <div className="rounded-xl border border-dashed p-12 text-center">
             <p className="font-display text-2xl">
@@ -115,7 +120,12 @@ export default async function LandingPage() {
 
           <ol className="divide-y divide-border">
             {rail.map((ebook, index) => (
-              <EbookRailItem key={ebook.id} ebook={ebook} rank={index + 1} />
+              <EbookRailItem
+                key={ebook.id}
+                ebook={ebook}
+                rank={index + 1}
+                revealIndex={index}
+              />
             ))}
           </ol>
         </section>

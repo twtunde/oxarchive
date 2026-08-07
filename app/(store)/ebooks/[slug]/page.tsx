@@ -1,12 +1,15 @@
 import { BookText } from "lucide-react"
 import type { Metadata } from "next"
 import Image from "next/image"
+import Link from "next/link"
 import { notFound } from "next/navigation"
 
 import { AddToCartButton } from "@/components/add-to-cart-button"
 import { EbookCard } from "@/components/ebook-card"
 import { FavoriteButton } from "@/components/favorite-button"
+import { ScrollReveal } from "@/components/scroll-reveal"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { getCatalogEbooks } from "@/db/queries/catalog"
 import { getEbookBySlug } from "@/db/queries/ebooks"
 import { formatPrice } from "@/lib/format"
@@ -86,7 +89,11 @@ export default async function EbookDetailPage({
 
   return (
     <div className="mx-auto flex min-h-svh w-full max-w-5xl flex-col gap-10 px-6 py-10">
-      <div className="grid gap-8 sm:grid-cols-[240px_1fr]">
+      <ScrollReveal
+        as="section"
+        className="grid gap-8 sm:grid-cols-[240px_1fr]"
+        index={0}
+      >
         <div className="relative mx-auto h-80 w-full max-w-sm overflow-hidden rounded-xl bg-muted sm:mx-0 sm:aspect-2/3 sm:h-auto sm:max-w-none">
           {ebook.coverImageUrl ? (
             <Image
@@ -134,17 +141,35 @@ export default async function EbookDetailPage({
               className="flex-1 rounded-full sm:flex-none"
             />
             <FavoriteButton ebookId={ebook.id} size="icon-lg" />
+            {ebook.format !== "epub" ? (
+              <Button asChild variant="outline" className="rounded-full">
+                <Link
+                  href={`/preview/${ebook.slug}`}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Read 7-page preview
+                </Link>
+              </Button>
+            ) : null}
           </div>
+
+          {ebook.format !== "epub" ? (
+            <p className="text-xs text-muted-foreground">
+              Preview is limited to the first 7 pages. Full book unlocks after
+              payment.
+            </p>
+          ) : null}
         </div>
-      </div>
+      </ScrollReveal>
 
       {related.length > 0 ? (
         <section className="space-y-4">
           <h2 className="font-display text-xl">More in {ebook.categoryName}</h2>
           <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {related.map((item) => (
+            {related.map((item, index) => (
               <li key={item.id}>
-                <EbookCard ebook={item} />
+                <EbookCard ebook={item} revealIndex={index} />
               </li>
             ))}
           </ul>

@@ -89,9 +89,9 @@ export function CatalogList({ filters, initialData }: CatalogListProps) {
         className="grid gap-4 transition-opacity sm:grid-cols-2 lg:grid-cols-3"
         style={{ opacity: isPlaceholderData ? 0.6 : 1 }}
       >
-        {items.map((ebook) => (
+        {items.map((ebook, index) => (
           <li key={ebook.id}>
-            <EbookCard ebook={ebook} />
+            <EbookCard ebook={ebook} revealIndex={index} />
           </li>
         ))}
       </ul>

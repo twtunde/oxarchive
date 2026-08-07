@@ -1,8 +1,9 @@
 "use client"
 
 import { Heart } from "lucide-react"
-import { useSyncExternalStore } from "react"
+import { useState, useSyncExternalStore } from "react"
 
+import { ClickLottieFeedback } from "@/components/click-lottie-feedback"
 import { Button, type buttonVariants } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useFavoritesStore } from "@/lib/stores/favorites-store"
@@ -20,6 +21,8 @@ export function FavoriteButton({
   className,
   size = "icon",
 }: FavoriteButtonProps) {
+  const isCompactLike = size === "icon-sm"
+  const [playToken, setPlayToken] = useState(0)
   const isMounted = useSyncExternalStore(
     () => () => {},
     () => true,
@@ -59,14 +62,32 @@ export function FavoriteButton({
       onClick={(event) => {
         event.preventDefault()
         event.stopPropagation()
+        setPlayToken((value) => value + 1)
         toggleFavorite(ebookId)
       }}
-      className={cn("rounded-full", className)}
+      className={cn(
+        "relative overflow-visible rounded-full transition-colors",
+        isFavorite
+          ? isCompactLike
+            ? "border-red-200 bg-red-50/80 text-red-500 hover:border-red-300 hover:bg-red-100"
+            : "border-red-300 bg-red-50 text-red-600 hover:border-red-400 hover:bg-red-100"
+          : isCompactLike
+            ? "hover:border-red-200 hover:bg-red-50/70 hover:text-red-400"
+            : "hover:border-red-300 hover:text-red-500",
+        className
+      )}
     >
       <Heart
-        className={cn("size-4", isFavorite && "fill-primary text-primary")}
+        className={cn(
+          "size-4",
+          isFavorite &&
+            (isCompactLike
+              ? "fill-red-400 text-red-400"
+              : "fill-red-500 text-red-500")
+        )}
         aria-hidden
       />
+      <ClickLottieFeedback playToken={playToken} className="inset-0" />
     </Button>
   )
 }

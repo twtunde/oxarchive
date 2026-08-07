@@ -42,7 +42,9 @@ export default function FavoritesPage() {
 
     // Most recently favourited first.
     const order = new Map(favoriteIds.map((id, index) => [id, index]))
-    return [...data].sort((a, b) => (order.get(b.id) ?? 0) - (order.get(a.id) ?? 0))
+    return [...data].sort(
+      (a, b) => (order.get(b.id) ?? 0) - (order.get(a.id) ?? 0)
+    )
   }, [data, favoriteIds])
 
   const isPending = !hasHydrated || isLoading
@@ -75,9 +77,9 @@ export default function FavoritesPage() {
         </div>
       ) : (
         <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {orderedEbooks.map((ebook) => (
+          {orderedEbooks.map((ebook, index) => (
             <li key={ebook.id}>
-              <EbookCard ebook={ebook} />
+              <EbookCard ebook={ebook} revealIndex={index} />
             </li>
           ))}
         </ul>

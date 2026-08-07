@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import { notFound } from "next/navigation"
 
 import { ConfirmTransferForm } from "./confirm-transfer-form"
+import { ScrollReveal } from "@/components/scroll-reveal"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { getActiveBankAccounts } from "@/db/queries/bank-settings"
@@ -87,11 +88,16 @@ export default async function CheckoutStatusPage({
           </CardHeader>
           <CardContent className="space-y-4">
             <ul className="space-y-3">
-              {order.items.map((item) => {
+              {order.items.map((item, index) => {
                 const purchase = purchasesByOrderItemId.get(item.id)
 
                 return (
-                  <li key={item.id} className="rounded-md border p-3">
+                  <ScrollReveal
+                    key={item.id}
+                    as="li"
+                    index={index}
+                    className="rounded-md border p-3"
+                  >
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
                         <p className="font-medium">{item.ebook.title}</p>
@@ -118,7 +124,7 @@ export default async function CheckoutStatusPage({
                         Download unlocks after admin confirms payment.
                       </p>
                     )}
-                  </li>
+                  </ScrollReveal>
                 )
               })}
             </ul>

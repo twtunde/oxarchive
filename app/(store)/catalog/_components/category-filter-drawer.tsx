@@ -4,6 +4,7 @@ import { Filter, X } from "lucide-react"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useMemo, useState } from "react"
 
+import { ScrollReveal } from "@/components/scroll-reveal"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
@@ -25,6 +26,7 @@ export function CategoryFilterDrawer({
   const router = useRouter()
   const searchParams = useSearchParams()
   const [open, setOpen] = useState(false)
+  const [desktopCategoriesOpen, setDesktopCategoriesOpen] = useState(true)
 
   const selectedLabel = useMemo(() => {
     if (!selectedCategory) {
@@ -54,6 +56,15 @@ export function CategoryFilterDrawer({
     setOpen(false)
   }
 
+  function handleFilterButtonClick() {
+    if (window.matchMedia("(min-width: 768px)").matches) {
+      setDesktopCategoriesOpen((value) => !value)
+      return
+    }
+
+    setOpen(true)
+  }
+
   return (
     <>
       <div className="flex flex-wrap items-center gap-2">
@@ -61,8 +72,14 @@ export function CategoryFilterDrawer({
           type="button"
           variant="outline"
           size="sm"
-          className="rounded-full"
-          onClick={() => setOpen(true)}
+          className={cn(
+            "rounded-full",
+            !desktopCategoriesOpen &&
+              "md:motion-safe:animate-[pulse_1.8s_ease-in-out_infinite]"
+          )}
+          onClick={handleFilterButtonClick}
+          aria-expanded={desktopCategoriesOpen}
+          aria-controls="desktop-category-filters"
         >
           <Filter className="size-4" aria-hidden />
           Filter by category
@@ -126,28 +143,48 @@ export function CategoryFilterDrawer({
         </div>
       ) : null}
 
-      <div className="hidden flex-wrap gap-2 md:flex">
-        <Button
-          type="button"
-          size="sm"
-          variant={!selectedCategory ? "default" : "outline"}
-          className="rounded-full"
-          onClick={() => applyCategory(undefined)}
-        >
-          All
-        </Button>
-        {categories.map((category) => (
-          <Button
-            key={category.slug}
-            type="button"
-            size="sm"
-            variant={selectedCategory === category.slug ? "default" : "outline"}
-            className="rounded-full"
-            onClick={() => applyCategory(category.slug)}
-          >
-            {category.name}
-          </Button>
-        ))}
+      <div
+        id="desktop-category-filters"
+        className={cn(
+          "hidden overflow-hidden transition-all duration-300 ease-out md:block",
+          desktopCategoriesOpen
+            ? "max-h-40 translate-y-0 opacity-100"
+            : "pointer-events-none max-h-0 -translate-y-1 opacity-0"
+        )}
+      >
+        <div className="flex flex-wrap gap-2 pt-1">
+          <ScrollReveal index={0} threshold={0.2} intervalMs={70}>
+            <Button
+              type="button"
+              size="sm"
+              variant={!selectedCategory ? "default" : "outline"}
+              className="rounded-full"
+              onClick={() => applyCategory(undefined)}
+            >
+              All
+            </Button>
+          </ScrollReveal>
+          {categories.map((category, index) => (
+            <ScrollReveal
+              key={category.slug}
+              index={index + 1}
+              threshold={0.2}
+              intervalMs={70}
+            >
+              <Button
+                type="button"
+                size="sm"
+                variant={
+                  selectedCategory === category.slug ? "default" : "outline"
+                }
+                className="rounded-full"
+                onClick={() => applyCategory(category.slug)}
+              >
+                {category.name}
+              </Button>
+            </ScrollReveal>
+          ))}
+        </div>
       </div>
     </>
   )

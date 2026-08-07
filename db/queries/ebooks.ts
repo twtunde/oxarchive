@@ -24,6 +24,15 @@ const ebookDetailSchema = z.object({
 
 export type EbookDetail = z.infer<typeof ebookDetailSchema>
 
+const ebookPreviewAssetSchema = z.object({
+    slug: z.string(),
+    title: z.string(),
+    cloudinaryPublicId: z.string(),
+    format: z.enum(["pdf", "epub", "pdf_epub"]),
+})
+
+export type EbookPreviewAsset = z.infer<typeof ebookPreviewAssetSchema>
+
 export async function getEbookBySlug(slug: string): Promise<EbookDetail | null> {
     const [row] = await db
         .select({
@@ -51,4 +60,23 @@ export async function getEbookBySlug(slug: string): Promise<EbookDetail | null> 
     }
 
     return ebookDetailSchema.parse(row)
+}
+
+export async function getEbookPreviewAssetBySlug(slug: string): Promise<EbookPreviewAsset | null> {
+    const [row] = await db
+        .select({
+            slug: ebooks.slug,
+            title: ebooks.title,
+            cloudinaryPublicId: ebooks.cloudinaryPublicId,
+            format: ebooks.format,
+        })
+        .from(ebooks)
+        .where(and(eq(ebooks.slug, slug), eq(ebooks.isPublished, true)))
+        .limit(1)
+
+    if (!row) {
+        return null
+    }
+
+    return ebookPreviewAssetSchema.parse(row)
 }
