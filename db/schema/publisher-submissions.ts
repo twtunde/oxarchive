@@ -50,6 +50,7 @@ export const publisherSubmissions = pgTable(
         coverImageUrl: text("cover_image_url"),
         cloudinaryPublicId: varchar("cloudinary_public_id", { length: 255 }).notNull().unique(),
         payoutMethod: publisherPayoutMethodEnum("payout_method").notNull(),
+        bankName: varchar("bank_name", { length: 180 }),
         bankAccountName: varchar("bank_account_name", { length: 180 }),
         bankAccountNumber: varchar("bank_account_number", { length: 80 }),
         bankCodeSwift: varchar("bank_code_swift", { length: 80 }),

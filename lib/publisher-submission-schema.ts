@@ -1,5 +1,7 @@
 import { z } from "zod"
 
+import { NIGERIAN_BANKS } from "@/lib/nigerian-banks"
+
 export const payoutMethodSchema = z.enum(["bank", "paypal", "payoneer"])
 
 const basePublisherSubmissionSchema = z.object({
@@ -18,6 +20,14 @@ const basePublisherSubmissionSchema = z.object({
     format: z.enum(["pdf", "epub"]),
     suggestedPriceInMainUnit: z.coerce.number().positive("Suggested price must be greater than 0."),
     payoutMethod: payoutMethodSchema,
+    bankName: z
+        .string()
+        .trim()
+        .refine((value) => value.length === 0 || NIGERIAN_BANKS.includes(value as (typeof NIGERIAN_BANKS)[number]), {
+            message: "Choose a valid Nigerian bank.",
+        })
+        .optional()
+        .transform((value) => (value ? value : undefined)),
     bankAccountName: z
         .string()
         .trim()
@@ -52,6 +62,14 @@ const basePublisherSubmissionSchema = z.object({
 
 export const publisherSubmissionSchema = basePublisherSubmissionSchema.superRefine((value, ctx) => {
     if (value.payoutMethod === "bank") {
+        if (!value.bankName) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                path: ["bankName"],
+                message: "Bank name is required for bank payout.",
+            })
+        }
+
         if (!value.bankAccountName) {
             ctx.addIssue({
                 code: z.ZodIssueCode.custom,

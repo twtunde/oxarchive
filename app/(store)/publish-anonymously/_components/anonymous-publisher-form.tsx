@@ -1,11 +1,12 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useMutation } from "@tanstack/react-query"
 import { useMemo } from "react"
-import { useForm } from "react-hook-form"
+import { Controller, type Path, useForm } from "react-hook-form"
+import { toast } from "sonner"
 import { z } from "zod"
 
+import { submitAnonymousPublisherDraftAction } from "../actions"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -18,11 +19,10 @@ import {
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import {
-  type PublisherSubmissionFormPayload,
-  type SubmissionApiResult,
-  submitPublisherSubmission,
-} from "@/lib/publisher-submission-client"
-import { payoutMethodSchema } from "@/lib/publisher-submission-schema"
+  payoutMethodSchema,
+  publisherSubmissionSchema,
+} from "@/lib/publisher-submission-schema"
+import { NIGERIAN_BANKS } from "@/lib/nigerian-banks"
 
 const isFileListAvailable = typeof FileList !== "undefined"
 
@@ -33,22 +33,7 @@ const fileListSchema = z.custom<FileList>(
   }
 )
 
-const formSchema = z.object({
-  pseudonym: z.string().trim().min(2).max(180),
-  contactEmail: z.email().max(320),
-  title: z.string().trim().min(2).max(240),
-  authorDisplayName: z.string().trim().min(2).max(180),
-  description: z.string().trim().min(20),
-  categoryId: z.string().uuid(),
-  edition: z.string().trim().max(80).optional(),
-  format: z.enum(["pdf", "epub"]),
-  suggestedPriceInMainUnit: z.number().positive(),
-  payoutMethod: payoutMethodSchema,
-  bankAccountName: z.string().trim().max(180).optional(),
-  bankAccountNumber: z.string().trim().max(80).optional(),
-  bankCodeSwift: z.string().trim().max(80).optional(),
-  paypalEmail: z.string().trim().max(320).optional(),
-  payoneerEmail: z.string().trim().max(320).optional(),
+const formSchema = publisherSubmissionSchema.extend({
   ebookFile: fileListSchema.refine(
     (value) => !isFileListAvailable || value.length > 0,
     {
@@ -59,6 +44,8 @@ const formSchema = z.object({
 })
 
 type FormValues = z.infer<typeof formSchema>
+type FormInputValues = z.input<typeof formSchema>
+type FormOutputValues = z.output<typeof formSchema>
 
 type CategoryOption = {
   id: string
@@ -84,11 +71,14 @@ export function AnonymousPublisherForm({
   const {
     register,
     handleSubmit,
+    control,
     setValue,
+    setError,
+    clearErrors,
     watch,
     reset,
-    formState: { errors },
-  } = useForm<FormValues>({
+    formState: { errors, isSubmitting },
+  } = useForm<FormInputValues, unknown, FormOutputValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       payoutMethod: "bank",
@@ -99,22 +89,6 @@ export function AnonymousPublisherForm({
 
   const payoutMethod = watch("payoutMethod")
 
-  const createSubmissionMutation = useMutation<
-    SubmissionApiResult,
-    Error,
-    FormValues
-  >({
-    mutationFn: (values) =>
-      submitPublisherSubmission(values as PublisherSubmissionFormPayload),
-    onSuccess: () => {
-      reset({
-        payoutMethod: "bank",
-        format: "pdf",
-        suggestedPriceInMainUnit: 2500,
-      })
-    },
-  })
-
   const payoutHelpText = useMemo(() => {
     if (!payoutMethod) {
       return null
@@ -122,6 +96,84 @@ export function AnonymousPublisherForm({
 
     return payoutMethodDescriptions[payoutMethod]
   }, [payoutMethod])
+
+  function appendIfPresent(formData: FormData, key: string, value?: string) {
+    const normalized = value?.trim()
+    if (normalized) {
+      formData.set(key, normalized)
+    }
+  }
+
+  async function onSubmit(values: FormOutputValues) {
+    clearErrors()
+
+    const payload = new FormData()
+    payload.set("pseudonym", values.pseudonym)
+    payload.set("contactEmail", values.contactEmail)
+    payload.set("title", values.title)
+    payload.set("authorDisplayName", values.authorDisplayName)
+    payload.set("description", values.description)
+    payload.set("categoryId", values.categoryId)
+    payload.set("format", values.format)
+    payload.set(
+      "suggestedPriceInMainUnit",
+      String(values.suggestedPriceInMainUnit)
+    )
+    payload.set("payoutMethod", values.payoutMethod)
+
+    appendIfPresent(payload, "edition", values.edition)
+    appendIfPresent(payload, "bankName", values.bankName)
+    appendIfPresent(payload, "bankAccountName", values.bankAccountName)
+    appendIfPresent(payload, "bankAccountNumber", values.bankAccountNumber)
+    appendIfPresent(payload, "bankCodeSwift", values.bankCodeSwift)
+    appendIfPresent(payload, "paypalEmail", values.paypalEmail)
+    appendIfPresent(payload, "payoneerEmail", values.payoneerEmail)
+
+    const ebookFile = values.ebookFile?.item(0)
+    if (ebookFile) {
+      payload.set("ebookFile", ebookFile)
+    }
+
+    const coverImage = values.coverImage?.item(0)
+    if (coverImage) {
+      payload.set("coverImage", coverImage)
+    }
+
+    let result: Awaited<ReturnType<typeof submitAnonymousPublisherDraftAction>>
+
+    try {
+      result = await submitAnonymousPublisherDraftAction(payload)
+    } catch {
+      toast.error("Submission failed. Please try again.")
+      return
+    }
+
+    if (result.status === "success") {
+      toast.success(result.message)
+      reset({
+        payoutMethod: "bank",
+        format: "pdf",
+        suggestedPriceInMainUnit: 2500,
+      })
+      return
+    }
+
+    if (result.fieldErrors) {
+      Object.entries(result.fieldErrors).forEach(([key, messages]) => {
+        const firstMessage = messages?.[0]
+        if (!firstMessage) {
+          return
+        }
+
+        setError(key as Path<FormInputValues>, {
+          type: "server",
+          message: firstMessage,
+        })
+      })
+    }
+
+    toast.error(result.message)
+  }
 
   return (
     <Card>
@@ -131,12 +183,7 @@ export function AnonymousPublisherForm({
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <form
-          className="space-y-5"
-          onSubmit={handleSubmit((values) =>
-            createSubmissionMutation.mutate(values)
-          )}
-        >
+        <form className="space-y-5" onSubmit={handleSubmit(onSubmit)}>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
               <label
@@ -228,26 +275,24 @@ export function AnonymousPublisherForm({
               >
                 Category
               </label>
-              <Select
-                onValueChange={(value) =>
-                  setValue("categoryId", value, {
-                    shouldValidate: true,
-                    shouldDirty: true,
-                  })
-                }
-              >
-                <SelectTrigger id="categoryId" className="w-full">
-                  <SelectValue placeholder="Select category" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map((category) => (
-                    <SelectItem key={category.id} value={category.id}>
-                      {category.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <input type="hidden" {...register("categoryId")} />
+              <Controller
+                name="categoryId"
+                control={control}
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger id="categoryId" className="w-full">
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.map((category) => (
+                        <SelectItem key={category.id} value={category.id}>
+                          {category.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
               {errors.categoryId?.message ? (
                 <p className="text-xs text-destructive">
                   {errors.categoryId.message}
@@ -259,24 +304,21 @@ export function AnonymousPublisherForm({
               <label className="text-xs font-medium uppercase" htmlFor="format">
                 Format
               </label>
-              <Select
-                defaultValue="pdf"
-                onValueChange={(value) =>
-                  setValue("format", value as FormValues["format"], {
-                    shouldValidate: true,
-                    shouldDirty: true,
-                  })
-                }
-              >
-                <SelectTrigger id="format" className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="pdf">PDF</SelectItem>
-                  <SelectItem value="epub">EPUB</SelectItem>
-                </SelectContent>
-              </Select>
-              <input type="hidden" {...register("format")} />
+              <Controller
+                name="format"
+                control={control}
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger id="format" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pdf">PDF</SelectItem>
+                      <SelectItem value="epub">EPUB</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+              />
             </div>
 
             <div className="space-y-1.5">
@@ -349,11 +391,11 @@ export function AnonymousPublisherForm({
                 Payout method
               </label>
               <Select
-                defaultValue="bank"
+                value={payoutMethod}
                 onValueChange={(value) =>
                   setValue(
                     "payoutMethod",
-                    value as FormValues["payoutMethod"],
+                    value as FormInputValues["payoutMethod"],
                     {
                       shouldValidate: true,
                       shouldDirty: true,
@@ -371,6 +413,11 @@ export function AnonymousPublisherForm({
                 </SelectContent>
               </Select>
               <input type="hidden" {...register("payoutMethod")} />
+              {errors.payoutMethod?.message ? (
+                <p className="text-xs text-destructive">
+                  {errors.payoutMethod.message}
+                </p>
+              ) : null}
               {payoutHelpText ? (
                 <p className="text-xs text-muted-foreground">
                   {payoutHelpText}
@@ -379,39 +426,91 @@ export function AnonymousPublisherForm({
             </div>
 
             {payoutMethod === "bank" ? (
-              <div className="grid gap-3 sm:grid-cols-3">
+              <div className="space-y-3">
                 <div className="space-y-1.5">
                   <label
                     className="text-xs font-medium uppercase"
-                    htmlFor="bankAccountName"
+                    htmlFor="bankName"
                   >
-                    Account name
+                    Bank name
                   </label>
-                  <Input
-                    id="bankAccountName"
-                    {...register("bankAccountName")}
+                  <Controller
+                    name="bankName"
+                    control={control}
+                    render={({ field }) => (
+                      <Select
+                        value={field.value ?? ""}
+                        onValueChange={field.onChange}
+                      >
+                        <SelectTrigger id="bankName" className="w-full sm:w-96">
+                          <SelectValue placeholder="Select Nigerian bank" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {NIGERIAN_BANKS.map((bankName) => (
+                            <SelectItem key={bankName} value={bankName}>
+                              {bankName}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
                   />
+                  {errors.bankName?.message ? (
+                    <p className="text-xs text-destructive">
+                      {errors.bankName.message}
+                    </p>
+                  ) : null}
                 </div>
-                <div className="space-y-1.5">
-                  <label
-                    className="text-xs font-medium uppercase"
-                    htmlFor="bankAccountNumber"
-                  >
-                    Account number
-                  </label>
-                  <Input
-                    id="bankAccountNumber"
-                    {...register("bankAccountNumber")}
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label
-                    className="text-xs font-medium uppercase"
-                    htmlFor="bankCodeSwift"
-                  >
-                    Bank code / SWIFT
-                  </label>
-                  <Input id="bankCodeSwift" {...register("bankCodeSwift")} />
+
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <div className="space-y-1.5">
+                    <label
+                      className="text-xs font-medium uppercase"
+                      htmlFor="bankAccountName"
+                    >
+                      Account name
+                    </label>
+                    <Input
+                      id="bankAccountName"
+                      {...register("bankAccountName")}
+                    />
+                    {errors.bankAccountName?.message ? (
+                      <p className="text-xs text-destructive">
+                        {errors.bankAccountName.message}
+                      </p>
+                    ) : null}
+                  </div>
+                  <div className="space-y-1.5">
+                    <label
+                      className="text-xs font-medium uppercase"
+                      htmlFor="bankAccountNumber"
+                    >
+                      Account number
+                    </label>
+                    <Input
+                      id="bankAccountNumber"
+                      {...register("bankAccountNumber")}
+                    />
+                    {errors.bankAccountNumber?.message ? (
+                      <p className="text-xs text-destructive">
+                        {errors.bankAccountNumber.message}
+                      </p>
+                    ) : null}
+                  </div>
+                  <div className="space-y-1.5">
+                    <label
+                      className="text-xs font-medium uppercase"
+                      htmlFor="bankCodeSwift"
+                    >
+                      Bank code / SWIFT
+                    </label>
+                    <Input id="bankCodeSwift" {...register("bankCodeSwift")} />
+                    {errors.bankCodeSwift?.message ? (
+                      <p className="text-xs text-destructive">
+                        {errors.bankCodeSwift.message}
+                      </p>
+                    ) : null}
+                  </div>
                 </div>
               </div>
             ) : null}
@@ -429,6 +528,11 @@ export function AnonymousPublisherForm({
                   type="email"
                   {...register("paypalEmail")}
                 />
+                {errors.paypalEmail?.message ? (
+                  <p className="text-xs text-destructive">
+                    {errors.paypalEmail.message}
+                  </p>
+                ) : null}
               </div>
             ) : null}
 
@@ -445,6 +549,11 @@ export function AnonymousPublisherForm({
                   type="email"
                   {...register("payoneerEmail")}
                 />
+                {errors.payoneerEmail?.message ? (
+                  <p className="text-xs text-destructive">
+                    {errors.payoneerEmail.message}
+                  </p>
+                ) : null}
               </div>
             ) : null}
           </div>
@@ -462,22 +571,8 @@ export function AnonymousPublisherForm({
             </p>
           </div>
 
-          {createSubmissionMutation.isError ? (
-            <p className="text-xs text-destructive">
-              {createSubmissionMutation.error.message}
-            </p>
-          ) : null}
-
-          {createSubmissionMutation.isSuccess ? (
-            <p className="text-xs text-primary">
-              Submission received. We will review and notify you by email.
-            </p>
-          ) : null}
-
-          <Button type="submit" disabled={createSubmissionMutation.isPending}>
-            {createSubmissionMutation.isPending
-              ? "Submitting..."
-              : "Submit anonymous draft"}
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? "Submitting..." : "Submit anonymous draft"}
           </Button>
         </form>
       </CardContent>

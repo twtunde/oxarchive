@@ -115,6 +115,7 @@ export default async function AdminPublisherSubmissionsPage({
                 <p className="font-medium text-foreground">
                   Publisher payout details
                 </p>
+                <p>Bank name: {submission.bankName ?? "-"}</p>
                 <p>Bank account name: {submission.bankAccountName ?? "-"}</p>
                 <p>
                   Bank account number: {submission.bankAccountNumber ?? "-"}
@@ -265,6 +266,10 @@ export default async function AdminPublisherSubmissionsPage({
                 <p>
                   <span className="text-muted-foreground">Net payout:</span>{" "}
                   {formatPrice(row.publisherNetInKobo, row.currency)}
+                </p>
+                <p>
+                  <span className="text-muted-foreground">Bank name:</span>{" "}
+                  {row.bankName ?? "-"}
                 </p>
 
                 <form action={sendPayoutSummaryAction} className="pt-2">

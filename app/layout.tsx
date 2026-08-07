@@ -5,6 +5,7 @@ import Script from "next/script"
 import "./globals.css"
 import { QueryProvider } from "@/components/query-provider"
 import { ThemeProvider } from "@/components/theme-provider"
+import { Toaster } from "@/components/ui/sonner"
 import { getSiteUrl, siteConfig } from "@/lib/seo"
 import { cn } from "@/lib/utils"
 
@@ -99,7 +100,10 @@ export default function RootLayout({
     >
       <body>
         <QueryProvider>
-          <ThemeProvider>{children}</ThemeProvider>
+          <ThemeProvider>
+            {children}
+            <Toaster />
+          </ThemeProvider>
         </QueryProvider>
         <Script id="tawk-init" strategy="afterInteractive">
           {`

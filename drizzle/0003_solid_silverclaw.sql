@@ -1,0 +1,1 @@
+ALTER TABLE "publisher_submissions" ADD COLUMN "bank_name" varchar(180);
